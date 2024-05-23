@@ -3,7 +3,9 @@ package com.hanbat.capstone.somoim.web;
 
 import com.hanbat.capstone.somoim.domain.User;
 import com.hanbat.capstone.somoim.service.UserService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -32,16 +34,28 @@ public class AuthController {
         return ResponseEntity.ok(registUser);
     }
 
+    // 로그인 성공 시 HttpOnly 및 Secure 쿠키 설정
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User loginUser, HttpServletRequest request) {
+    public ResponseEntity<?> loginUser(@RequestBody User loginUser, HttpServletRequest request, HttpServletResponse response) {
         Optional<User> optionalUser = userService.findByUsername(loginUser.getUsername());
 
         if (optionalUser.isPresent() && userService.checkPassword(loginUser.getPassword(), optionalUser.get().getPassword())) {
-            HttpSession session = request.getSession();
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+            session = request.getSession(true);
             session.setAttribute("user", optionalUser.get());
-            return ResponseEntity.ok().body(optionalUser.get().getNickname());
+
+            Cookie sessionCookie = new Cookie("JSESSIONID", session.getId());
+            sessionCookie.setHttpOnly(true);
+            sessionCookie.setSecure(true); // HTTPS를 사용하는 경우
+            sessionCookie.setPath("/");
+            response.addCookie(sessionCookie);
+
+            return ResponseEntity.ok("Login successful");
         } else {
-            return ResponseEntity.status(401).body("아이디나 비밀번호가 틀렸습니다.");
+            return ResponseEntity.status(401).body("Invalid username or password");
         }
     }
 
