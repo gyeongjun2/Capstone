@@ -8,11 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.Optional;
 
 @RestController
@@ -48,6 +46,7 @@ public class AuthController {
             }
             session = request.getSession(true);
             session.setAttribute("user", optionalUser.get());
+            session.setAttribute("nickname", optionalUser.get().getNickname());
 
             Cookie sessionCookie = new Cookie("JSESSIONID", session.getId());
             sessionCookie.setHttpOnly(true);
@@ -55,9 +54,9 @@ public class AuthController {
             sessionCookie.setPath("/");
             response.addCookie(sessionCookie);
 
-            return ResponseEntity.ok("로그인 성공!");
+            return ResponseEntity.ok("Login successful");
         } else {
-            return ResponseEntity.status(401).body("아이디나 비밀번호가 틀렸습니다.");
+            return ResponseEntity.status(401).body("Invalid username or password");
         }
     }
 
@@ -69,6 +68,16 @@ public class AuthController {
         }
         return ResponseEntity.ok("로그아웃 되었습니다.");
     }
-
+    @GetMapping("/getNickname")
+    public ResponseEntity<?> getNickname(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            String nickname = (String) session.getAttribute("nickname");
+            if (nickname != null) {
+                return ResponseEntity.ok(Collections.singletonMap("nickname", nickname));
+            }
+        }
+        return ResponseEntity.status(401).body("User not logged in");
+    }
 
 }
