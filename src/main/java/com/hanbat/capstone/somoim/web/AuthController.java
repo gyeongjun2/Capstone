@@ -80,4 +80,16 @@ public class AuthController {
         return ResponseEntity.status(401).body("User not logged in");
     }
 
+    @GetMapping("/check-username")
+    public ResponseEntity<?> checkUsername(@RequestParam String username) {
+        boolean exists = userService.findByUsername(username).isPresent();
+        return ResponseEntity.ok(Collections.singletonMap("exists", exists));
+    }
+
+    @GetMapping("/check-nickname")
+    public ResponseEntity<?> checkNickname(@RequestParam String nickname) {
+        boolean exists = userService.findByNickname(nickname).isPresent();
+        return ResponseEntity.ok(Collections.singletonMap("exists", exists));
+    }
+
 }

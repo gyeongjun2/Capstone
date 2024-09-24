@@ -33,4 +33,9 @@ public class UserServiceImpl implements UserService {
     public boolean checkPassword(String rawPw, String encodePw) {
         return passwordEncoder.matches(rawPw, encodePw);
     }
+
+    @Override
+    public Optional<User> findByNickname(String nickname) {
+        return userRepository.findByNickname(nickname);
+    }
 }
