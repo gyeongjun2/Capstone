@@ -44,12 +44,6 @@ public class FriendService {
         friendRequestRepository.save(friendRequest);
     }
 
-
-//    public List<FriendRequest> getFriendRequestsByNickname(String nickname) {
-//        // 친구 요청을 받는 사람(receiver)이 현재 사용자의 닉네임과 일치하는 요청들을 반환
-//        return friendRequestRepository.findByReceiverNickname(nickname);
-//    }
-
     // 닉네임을 기준으로 친구 요청을 보내는 사람 목록 조회
     public List<FriendRequestResponseDto> getFriendRequestDtosByNickname(String nickname) {
         // 요청 데이터를 DTO로 변환하여 반환
@@ -78,7 +72,9 @@ public class FriendService {
 
         userRepository.save(sender);
         userRepository.save(receiver);
-        friendRequestRepository.save(request);
+
+        // 친구 요청을 수락한 후 요청 삭제
+        friendRequestRepository.delete(request);
     }
 
     // 친구 목록 반환
@@ -92,3 +88,4 @@ public class FriendService {
         return user.get().getFriends();
     }
 }
+

@@ -3,10 +3,10 @@ package com.hanbat.capstone.somoim.web;
 import com.hanbat.capstone.somoim.domain.ChatMessage;
 import com.hanbat.capstone.somoim.domain.ChatRoom;
 import com.hanbat.capstone.somoim.domain.User;
-import com.hanbat.capstone.somoim.dto.ChatRoomRequest;
-import com.hanbat.capstone.somoim.dto.UserRequestDto;
+import com.hanbat.capstone.somoim.dto.*;
 import com.hanbat.capstone.somoim.repository.ChatMessageRepository;
 import com.hanbat.capstone.somoim.repository.ChatRoomRepository;
+import com.hanbat.capstone.somoim.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -15,6 +15,9 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/main")
@@ -23,21 +26,46 @@ public class ChatController {
 
     private final SimpMessageSendingOperations template;
     private final ChatMessageRepository chatMessageRepository;
-
+    private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
 
-    //채팅방 생성
-    @PostMapping("/chatroom")
+    // 채팅방 생성
+    @PostMapping("/create-room")
     public ResponseEntity<ChatRoom> createChatRoom(@RequestBody ChatRoomRequest request) {
-        ChatRoom chatRoom = new ChatRoom(request.getName(), request.getCategory());  // 카테고리도 함께 저장
+        String creatorNickname = request.getCreatorNickname(); // 클라이언트로부터 받은 닉네임
+
+        ChatRoom chatRoom = new ChatRoom(request.getName(), request.getCategory(), creatorNickname,null);
         ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
         return ResponseEntity.ok(savedRoom);
     }
-    //모든 채팅방 조회
-    @GetMapping("/chatrooms")
+    // 채팅방 삭제
+    @DeleteMapping("/delete-room")
+    public ResponseEntity<String> deleteChatRoom(@RequestBody DeleteChatRoomRequest request) {
+        Long roomId = request.getRoomId();
+        String nickname = request.getNickname();
+
+        Optional<ChatRoom> chatRoomOptional = chatRoomRepository.findById(roomId);
+
+        if (chatRoomOptional.isPresent()) {
+            ChatRoom chatRoom = chatRoomOptional.get();
+            // 생성자의 닉네임과 요청자의 닉네임 비교
+            if (chatRoom.getCreatorNickname().equals(nickname)) {
+                chatRoomRepository.delete(chatRoom);
+                return ResponseEntity.ok("채팅방이 삭제되었습니다.");
+            } else {
+                return ResponseEntity.status(403).body("삭제 권한이 없습니다.");
+            }
+        } else {
+            return ResponseEntity.status(404).body("채팅방을 찾을 수 없습니다.");
+        }
+    }
+
+    @GetMapping("/select-room")
     public ResponseEntity<List<ChatRoom>> getAllChatRooms() {
-        List<ChatRoom> chatRooms = chatRoomRepository.findAll();
-        return ResponseEntity.ok(chatRooms);
+
+        List<ChatRoom> publicChatRooms = chatRoomRepository.findByCategoryNot("private");
+
+        return ResponseEntity.ok(publicChatRooms);
     }
 
     // 특정 채팅방의 메시지 리스트 반환
@@ -83,6 +111,45 @@ public class ChatController {
         List<ChatRoom> chatRooms = chatRoomRepository.findAllById(roomIds);
 
         return ResponseEntity.ok(chatRooms);
+    }
+
+    // 1:1 채팅방 생성 또는 기존 방 조회
+    @PostMapping("/create-private-room")
+    public ResponseEntity<ChatRoom> createPrivateChatRoom(@RequestBody PrivateChatRoomRequest request) {
+        String creatorNickname = request.getCreatorNickname();
+        String otherUserNickname = request.getOtherUserNickname();
+
+        // 기존 채팅방이 있는지 확인
+        Optional<ChatRoom> existingRoom = chatRoomRepository.findByCreatorNicknameAndOtherUserNickname(creatorNickname, otherUserNickname)
+                .or(() -> chatRoomRepository.findByOtherUserNicknameAndCreatorNickname(creatorNickname, otherUserNickname));
+
+        if (existingRoom.isPresent()) {
+            // 기존 채팅방이 있다면 해당 방 반환
+            return ResponseEntity.ok(existingRoom.get());
+        }
+
+        // 없으면 새로 생성
+        String roomName = creatorNickname + "-" + otherUserNickname;  // 예: "user1-user2" 형식
+        ChatRoom chatRoom = new ChatRoom(roomName, "private", creatorNickname, otherUserNickname);
+        ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
+
+        return ResponseEntity.ok(savedRoom);
+    }
+
+    // 특정 1:1 채팅방 조회
+    @PostMapping("/private-rooms")
+    public ResponseEntity<List<ChatRoom>> getPrivateRoomsForUser(@RequestBody UserNicknameRequest request) {
+        String userNickname = request.getUserNickname();
+
+
+        List<ChatRoom> roomsAsCreator = chatRoomRepository.findByCreatorNicknameAndCategory(userNickname, "private");
+        List<ChatRoom> roomsAsOtherUser = chatRoomRepository.findByOtherUserNicknameAndCategory(userNickname, "private");
+
+
+        List<ChatRoom> privateRooms = Stream.concat(roomsAsCreator.stream(), roomsAsOtherUser.stream())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(privateRooms);
     }
 
 }
