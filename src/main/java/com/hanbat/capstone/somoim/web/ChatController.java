@@ -2,7 +2,9 @@ package com.hanbat.capstone.somoim.web;
 
 import com.hanbat.capstone.somoim.domain.ChatMessage;
 import com.hanbat.capstone.somoim.domain.ChatRoom;
+import com.hanbat.capstone.somoim.domain.User;
 import com.hanbat.capstone.somoim.dto.ChatRoomRequest;
+import com.hanbat.capstone.somoim.dto.UserRequestDto;
 import com.hanbat.capstone.somoim.repository.ChatMessageRepository;
 import com.hanbat.capstone.somoim.repository.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +70,21 @@ public class ChatController {
 
 
     }
+
+    //사용자 채팅 참여 목록 반환
+    @PostMapping("/history")
+    public ResponseEntity<List<ChatRoom>> getChatRoomsForUser(@RequestBody UserRequestDto userRequestDto) {
+        String username = userRequestDto.getUsername();
+
+        // 사용자가 참여한 채팅방 ID 목록 조회
+        List<Long> roomIds = chatMessageRepository.findDistinctRoomIdsByUsername(username);
+
+        // 채팅방 ID 목록을 기반으로 채팅방 조회
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllById(roomIds);
+
+        return ResponseEntity.ok(chatRooms);
+    }
+
 }
 
 

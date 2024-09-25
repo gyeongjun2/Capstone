@@ -38,4 +38,10 @@ public class UserServiceImpl implements UserService {
     public Optional<User> findByNickname(String nickname) {
         return userRepository.findByNickname(nickname);
     }
+
+    @Override
+    public void save(User user) {
+        userRepository.save(user);
+    }
+
 }

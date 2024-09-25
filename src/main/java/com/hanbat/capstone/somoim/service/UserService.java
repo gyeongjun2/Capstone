@@ -13,4 +13,7 @@ public interface UserService {
     boolean checkPassword(String rawPw, String encodePw);
 
     Optional<User> findByNickname(String nickname);
+
+    void save(User user);
+
 }

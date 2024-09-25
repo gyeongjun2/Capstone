@@ -3,6 +3,11 @@ package com.hanbat.capstone.somoim.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -25,8 +30,15 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    //private String email; 넣을수도 있고 안넣을수도 잇고
-
-    //private String role;
+    // 친구 목록
+    @Setter
+    @Getter
+    @ManyToMany
+    @JoinTable(
+            name = "friends",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "friend_id")
+    )
+    private List<User> friends = new ArrayList<>();
 
 }
