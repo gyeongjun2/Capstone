@@ -61,11 +61,20 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(HttpServletRequest request) {
+    public ResponseEntity<?> logoutUser(HttpServletRequest request, HttpServletResponse response) {
         HttpSession session = request.getSession(false);
         if (session != null) {
-            session.invalidate();
+            session.invalidate();  // 세션 무효화
         }
+
+        // JSESSIONID 쿠키를 만료시켜서 삭제
+        Cookie sessionCookie = new Cookie("JSESSIONID", null);  // 쿠키 이름을 유지하고 값을 null로 설정
+        sessionCookie.setPath("/");  // 해당 경로와 도메인을 설정
+        sessionCookie.setHttpOnly(true);
+        sessionCookie.setSecure(true);  // HTTPS를 사용하는 경우
+        sessionCookie.setMaxAge(0);  // 쿠키 만료 설정 (0으로 설정하면 즉시 만료됨)
+        response.addCookie(sessionCookie);
+
         return ResponseEntity.ok("로그아웃 되었습니다.");
     }
     @GetMapping("/getNickname")
