@@ -2,12 +2,11 @@ package com.hanbat.capstone.somoim.web;
 
 import com.hanbat.capstone.somoim.domain.ChatMessage;
 import com.hanbat.capstone.somoim.domain.ChatRoom;
-import com.hanbat.capstone.somoim.domain.User;
 import com.hanbat.capstone.somoim.dto.*;
 import com.hanbat.capstone.somoim.repository.ChatMessageRepository;
 import com.hanbat.capstone.somoim.repository.ChatRoomRepository;
-import com.hanbat.capstone.somoim.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,13 +21,13 @@ import java.util.stream.Stream;
 @RestController
 @RequestMapping("/main")
 @RequiredArgsConstructor
+@Slf4j
 public class ChatController {
+
 
     private final SimpMessageSendingOperations template;
     private final ChatMessageRepository chatMessageRepository;
-    private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
-
     // 채팅방 생성
     @PostMapping("/create-room")
     public ResponseEntity<ChatRoom> createChatRoom(@RequestBody ChatRoomRequest request) {
@@ -89,13 +88,13 @@ public class ChatController {
         // 채팅방 ID를 설정
         chatMessage.setRoomId(roomId);
 
+
         // 메시지를 DB에 저장
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
 
         // 저장된 메시지를 해당 채팅방 구독자들에게 전송
         String destination = "/sub/chatroom/" + roomId;
         template.convertAndSend(destination, savedMessage);
-
 
     }
 

@@ -54,6 +54,7 @@ public class AuthController {
             sessionCookie.setPath("/");
             response.addCookie(sessionCookie);
 
+
             return ResponseEntity.ok("Login successful");
         } else {
             return ResponseEntity.status(401).body("Invalid username or password");
