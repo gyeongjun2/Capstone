@@ -5,8 +5,10 @@ import com.hanbat.capstone.somoim.domain.ChatRoom;
 import com.hanbat.capstone.somoim.dto.*;
 import com.hanbat.capstone.somoim.repository.ChatMessageRepository;
 import com.hanbat.capstone.somoim.repository.ChatRoomRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -14,6 +16,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,7 +91,6 @@ public class ChatController {
         // 채팅방 ID를 설정
         chatMessage.setRoomId(roomId);
 
-
         // 메시지를 DB에 저장
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
 
@@ -97,6 +99,7 @@ public class ChatController {
         template.convertAndSend(destination, savedMessage);
 
     }
+
 
     //사용자 채팅 참여 목록 반환
     @PostMapping("/history")
@@ -149,6 +152,14 @@ public class ChatController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(privateRooms);
+    }
+
+
+    @PostMapping("/my-chatrooms")
+    public ResponseEntity<List<ChatRoom>> getMyChatRooms(@RequestBody NicknameDto requestDto) {
+        String creatorNickname = requestDto.getNickname();
+        List<ChatRoom> chatRooms = chatRoomRepository.findByCreatorNickname(creatorNickname);
+        return ResponseEntity.ok(chatRooms);
     }
 
 }

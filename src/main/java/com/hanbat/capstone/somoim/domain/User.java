@@ -17,11 +17,11 @@ public class User {
     public User() {
     }
 
-    //PK 설정
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)    //속성 설정
+    @Column(nullable = false, unique = true)
     private String username;
 
     @Column(nullable = false, unique = true)
@@ -30,7 +30,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // 친구 목록
+
     @Setter
     @Getter
     @ManyToMany

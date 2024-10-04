@@ -22,16 +22,21 @@ public class ChatMessage {
     private Long roomId;
     private String name;
     private String message;
+    private MessageType type;
 
-    // 메시지가 생성될 때 자동으로 현재 시간이 기록됨
     private ZonedDateTime timestamp;
 
-    // 생성자 추가
-    public ChatMessage(Long roomId, String name, String message) {
+    public enum MessageType{
+        ENTER, QUIT, CHAT
+    }
+
+
+    public ChatMessage(Long roomId, String name, String message, MessageType type) {
         this.roomId = roomId;
         this.name = name;
         this.message = message;
-        this.timestamp = ZonedDateTime.now(ZoneId.of("Asia/Seoul")); // 한국 시간대로 시간 설정
+        this.timestamp = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        this.type = type;
     }
 
 }
